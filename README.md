@@ -1,26 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Warehouse Pro
 
-## Getting Started
+Warehouse Pro is a responsive inventory and POS management SPA built with **Next.js**, **TypeScript**, and **Tailwind CSS**. This package is ready to upload, build, and deploy as a modern web application.
 
-First, run the development server:
+## Key Features
+
+- RTL Arabic-first interface with seamless locale switching
+- Responsive desktop sidebar and mobile bottom navigation
+- Inventory management with product cards, search, edit, and delete
+- Dual POS buffers for simultaneous checkout sessions
+- Live currency converter and calculator tools
+- Settings panel for theme, compact layout, and exchange rate updates
+- Local browser persistence for instant demo usage
+
+## Setup
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run development mode:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Build for production:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Start the production server:
 
-## Learn More
+```bash
+npm run start
+```
+
+## Deployment
+
+The app is ready to deploy to platforms like Vercel, Netlify, or any Node-compatible host. The repository already includes a `.gitignore` that excludes `node_modules`, `.next`, and local environment files.
+
+Open [http://localhost:3000](http://localhost:3000) after running the dev server to preview the Warehouse Pro interface.
+
+## Notes
+
+Edit `src/app/page.tsx` to extend the SPA, add real backend integration, or connect real-time sync services.
 
 To learn more about Next.js, take a look at the following resources:
 

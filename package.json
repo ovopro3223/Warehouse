@@ -2,6 +2,7 @@
   "name": "warehouse-pro",
   "version": "0.1.0",
   "private": true,
+  "description": "Warehouse Pro: Inventory and POS SPA with RTL Arabic support built using Next.js, Tailwind CSS, and TypeScript.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
