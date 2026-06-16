@@ -5,6 +5,8 @@
   "description": "Warehouse Pro: Inventory and POS SPA with RTL Arabic support built using Next.js, Tailwind CSS, and TypeScript.",
   "scripts": {
     "dev": "next dev",
+    "realtime": "node realtime-server.js",
+    "dev:all": "concurrently \"npm:realtime\" \"npm:dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
@@ -12,13 +14,16 @@
   "dependencies": {
     "next": "16.2.9",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "concurrently": "^10.0.3",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",

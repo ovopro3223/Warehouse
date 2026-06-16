@@ -51,3 +51,33 @@ html[dir="rtl"] .rtl\:space-x-reverse {
   margin-left: 0;
   margin-right: 0;
 }
+
+/* Animations: top-tier, but respect reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  .motion-safe\:animate-fade-in,
+  .motion-safe\:animate-slide-in-left,
+  .motion-safe\:animate-slide-in-down,
+  .motion-safe\:animate-pop-in,
+  .motion-safe\:animate-breath {
+    animation: none !important;
+  }
+}
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInLeft { from { opacity: 0; transform: translateX(-18px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideInDown { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes popIn { 0% { transform: scale(.98); opacity: 0 } 60% { transform: scale(1.02); opacity: 1 } 100% { transform: scale(1); opacity: 1 } }
+@keyframes breath { 0% { transform: translateY(0) scale(1) } 50% { transform: translateY(-2px) scale(1.01) } 100% { transform: translateY(0) scale(1) } }
+
+.motion-safe\:animate-fade-in { animation: fadeIn 420ms cubic-bezier(.16,.84,.29,1) both; }
+.motion-safe\:animate-slide-in-left { animation: slideInLeft 600ms cubic-bezier(.16,.84,.29,1) both; }
+.motion-safe\:animate-slide-in-down { animation: slideInDown 560ms cubic-bezier(.16,.84,.29,1) both; }
+.motion-safe\:animate-pop-in { animation: popIn 680ms cubic-bezier(.2,.9,.25,1) both; }
+.motion-safe\:animate-breath { animation: breath 2200ms ease-in-out infinite; }
+
+/* Subtle glow for primary elements */
+.glow { box-shadow: 0 6px 30px rgba(14,165,233,0.07); }
+
+/* Make interactive hover lifts smooth */
+.card-hover { transition: transform 220ms cubic-bezier(.2,.9,.25,1), box-shadow 220ms; }
+

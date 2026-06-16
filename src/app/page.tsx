@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
+import { io, type Socket } from "socket.io-client";
 
 type Item = {
   id: string;
@@ -64,7 +65,7 @@ type SettingsState = {
 };
 
 const defaultSettings: SettingsState = {
-  businessName: "Warehouse Pro",
+  businessName: "hajramadan warehouse",
   businessLogo: "",
   isCompact: false,
   activeLanguage: "ar",
@@ -174,6 +175,78 @@ export default function Home() {
       }
     }
   }, []);
+
+  // Realtime: connect to socket.io server and sync updates
+  const socketRef = useRef<Socket | null>(null);
+  const selfIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    try {
+      const socket = io(process.env.NEXT_PUBLIC_REALTIME_URL || "http://localhost:4000");
+      socketRef.current = socket;
+      socket.on("connect", () => {
+        selfIdRef.current = socket.id ?? null;
+        console.info("realtime connected", socket.id);
+      });
+
+      socket.on("sync:remote-update", (payload) => {
+        // ignore own events
+        if (payload?.origin && payload.origin === selfIdRef.current) return;
+        if (!payload || !payload.type) return;
+        switch (payload.type) {
+          case "items":
+            setItems(payload.data ?? []);
+            break;
+          case "transactions":
+            setTransactions(payload.data ?? []);
+            break;
+          case "stockMovements":
+            setStockMovements(payload.data ?? []);
+            break;
+          case "baskets":
+            setBaskets(payload.data ?? baskets);
+            break;
+          case "settings":
+            setSettings((s) => ({ ...s, ...payload.data }));
+            break;
+          default:
+            break;
+        }
+      });
+
+      return () => {
+        socket.disconnect();
+        socketRef.current = null;
+      };
+    } catch (e) {
+      console.warn("Realtime init failed", e);
+    }
+  }, []);
+
+  // Emit updates when key data changes
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !socket.connected) return;
+    socket.emit("sync:update", { type: "items", data: items });
+  }, [items]);
+
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !socket.connected) return;
+    socket.emit("sync:update", { type: "transactions", data: transactions });
+  }, [transactions]);
+
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !socket.connected) return;
+    socket.emit("sync:update", { type: "stockMovements", data: stockMovements });
+  }, [stockMovements]);
+
+  useEffect(() => {
+    const socket = socketRef.current;
+    if (!socket || !socket.connected) return;
+    socket.emit("sync:update", { type: "baskets", data: baskets });
+  }, [baskets]);
 
   useEffect(() => {
     document.documentElement.lang = settings.activeLanguage;
@@ -394,27 +467,20 @@ export default function Home() {
   const themeClasses = settings.themeMode === "dark" ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900";
 
   return (
-    <div className={`${themeClasses} min-h-screen font-sans transition-colors duration-300`}>
+    <div className={`${themeClasses} min-h-screen font-sans transition-colors duration-300 motion-safe:animate-fade-in will-change-transform`}>
       <div className="mx-auto flex min-h-screen max-w-[1700px] flex-col md:flex-row">
-        <aside className="z-20 flex h-full w-full flex-col border-b border-slate-200 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 px-4 py-5 text-slate-100 shadow-xl md:w-[280px] md:border-r md:border-b-0 md:px-5 md:pt-8">
+        <aside className="z-20 flex h-full w-full flex-col border-b border-slate-200 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 px-4 py-5 text-slate-100 shadow-xl md:w-[280px] md:border-r md:border-b-0 md:px-5 md:pt-8 motion-safe:animate-slide-in-left motion-safe:duration-700">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="rounded-3xl border border-white/10 bg-white/5 p-3 text-lg font-black uppercase tracking-[0.2em] text-cyan-200 shadow-lg shadow-cyan-500/10">
                 WP
               </div>
-              <p className="mt-5 text-sm text-slate-400">Warehouse Pro</p>
+              <p className="mt-5 text-sm text-slate-400">hajramadan warehouse</p>
               <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white">
                 {settings.businessName}
               </h1>
             </div>
-            <div className="hidden md:block">
-              <button
-                onClick={() => setSettings((s) => ({ ...s, activeLanguage: s.activeLanguage === "ar" ? "en" : "ar" }))}
-                className="rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-sm text-white transition hover:bg-white/15"
-              >
-                {settings.activeLanguage === "ar" ? "EN" : "AR"}
-              </button>
-            </div>
+            {/* language toggle intentionally only in header to avoid duplicate floating bubble */}
           </div>
 
           <nav className="mt-10 flex w-full flex-col gap-2 overflow-x-auto pb-4 md:block">
@@ -445,7 +511,7 @@ export default function Home() {
         </aside>
 
         <main className="flex-1 p-4 md:p-6">
-          <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <header className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between motion-safe:animate-slide-in-down motion-safe:duration-600">
             <div>
               <p className="text-sm uppercase tracking-[0.3em] text-slate-500">{settings.activeLanguage === "ar" ? "لوحة التحكم" : "Dashboard"}</p>
               <h2 className="mt-3 text-3xl font-bold text-slate-900 dark:text-slate-100">
@@ -472,19 +538,19 @@ export default function Home() {
             <section className="space-y-6">
               <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                 <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950 motion-safe:animate-pop-in motion-safe:duration-700">
                     <p className="text-sm text-slate-500">{settings.activeLanguage === "ar" ? "قيمة المخزون" : "Stock Value"}</p>
                     <p className="mt-3 text-2xl font-semibold text-slate-900 dark:text-white">{formatMoney(totalStockValuation, "usd")}</p>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950 motion-safe:animate-pop-in motion-safe:duration-700">
                     <p className="text-sm text-slate-500">{settings.activeLanguage === "ar" ? "إجمالي المبيعات" : "Sales Revenue"}</p>
                     <p className="mt-3 text-2xl font-semibold text-slate-900 dark:text-white">{formatMoney(totalSalesRevenue, "usd")}</p>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950 motion-safe:animate-pop-in motion-safe:duration-700">
                     <p className="text-sm text-slate-500">{settings.activeLanguage === "ar" ? "صافي الربح" : "Net Margin"}</p>
                     <p className="mt-3 text-2xl font-semibold text-emerald-500">{formatMoney(totalProfit, "usd")}</p>
                   </div>
-                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950">
+                  <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-950 motion-safe:animate-pop-in motion-safe:duration-700">
                     <p className="text-sm text-slate-500">{settings.activeLanguage === "ar" ? "عدد الفواتير" : "Sales Count"}</p>
                     <p className="mt-3 text-2xl font-semibold text-slate-900 dark:text-white">{historicalSalesCount}</p>
                   </div>
@@ -492,7 +558,7 @@ export default function Home() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                   <button
                     onClick={() => handleOpenDrawer()}
-                    className="inline-flex items-center justify-center rounded-3xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500"
+                    className="inline-flex items-center justify-center rounded-3xl bg-cyan-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-cyan-500 motion-safe:animate-breath motion-safe:duration-1200 hover:scale-105"
                   >
                     {settings.activeLanguage === "ar" ? "إضافة منتج جديد" : "Add Product"}
                   </button>
@@ -518,7 +584,7 @@ export default function Home() {
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {filteredInventory.map((item) => (
-                  <div key={item.id} className="group rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl dark:border-slate-800 dark:bg-slate-950">
+                  <div key={item.id} className="group rounded-[32px] border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl dark:border-slate-800 dark:bg-slate-950 motion-safe:animate-pop-in motion-safe:duration-700">
                     <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-slate-100">
                       {item.image ? (
                         <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
